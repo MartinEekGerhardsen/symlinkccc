@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use walkdir::WalkDir;
 
@@ -21,12 +21,7 @@ pub fn get_all_build_package_paths(workspace: &Workspace) -> HashMap<Package, Bu
         .filter_map(std::result::Result::ok)
         .filter(|e| e.path().exists() && e.path().is_dir())
         .filter_map(|e| e.file_name().to_str().map(std::string::ToString::to_string))
-        .filter(|s| {
-            !crate::config::CONFIG
-                .build
-                .ignore_dirs
-                .contains(&Cow::from(s))
-        })
+        .filter(|s| !crate::config::BUILD_IGNORE_DIRS.contains(&s.as_str()))
         .map(|s| (Package(s.clone()), BuildPackage(build_path.join(s))))
         .collect()
 }

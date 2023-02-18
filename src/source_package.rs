@@ -53,7 +53,7 @@ pub fn get_all_source_package_paths(
 ) -> Result<HashMap<Package, SourcePackage>> {
     log::info!("Getting all packages and related source paths");
 
-    let rospack = which::which(crate::config::CONFIG.rospack.rospack_command.to_string())?;
+    let rospack = which::which(crate::config::ROSPACK_COMMAND)?;
     log::debug!("Found rospack command: {}", rospack.display());
 
     let rospack_list = Command::new(rospack)

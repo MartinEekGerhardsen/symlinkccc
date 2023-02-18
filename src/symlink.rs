@@ -56,23 +56,15 @@ fn link_compile_commands(
 ) -> Result<()> {
     log::info!("Linking compile commands");
 
-    let build_package_compile_commands_path = build_package_path.join(
-        crate::config::CONFIG
-            .symlink
-            .compile_commands_name
-            .to_string(),
-    );
+    let build_package_compile_commands_path =
+        build_package_path.join(crate::config::COMPILE_COMMANDS_NAME);
     log::debug!(
         "Built compile commands file at: {}",
         build_package_compile_commands_path.display()
     );
 
-    let source_package_compile_commands_path = source_package_path.join(
-        crate::config::CONFIG
-            .symlink
-            .compile_commands_name
-            .to_string(),
-    );
+    let source_package_compile_commands_path =
+        source_package_path.join(crate::config::COMPILE_COMMANDS_NAME);
     log::debug!(
         "Source path for linking compile commands at: {}",
         source_package_compile_commands_path.display()

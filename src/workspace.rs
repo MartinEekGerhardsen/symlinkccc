@@ -42,8 +42,7 @@ pub fn find_enclosing_workspace<P: AsRef<Path>>(search_start_path: P) -> Result<
     );
 
     loop {
-        let potential_path =
-            search_next_path.join(crate::config::CONFIG.locate.metadata_dir_name.to_string());
+        let potential_path = search_next_path.join(crate::config::METADATA_DIR_NAME);
         log::debug!("Looking for: {}", potential_path.display());
 
         if potential_path.exists() && potential_path.is_dir() {
