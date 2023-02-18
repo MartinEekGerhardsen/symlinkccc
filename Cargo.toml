@@ -8,12 +8,7 @@ description = "A small tool for linking compile commands from catkin builds"
 homepage = "https://github.com/MartinEekGerhardsen/symlinkccc"
 repository = "https://github.com/MartinEekGerhardsen/symlinkccc"
 readme = "README.md"
-keywords = [
-    "robot-operating-system",
-    "catkin",
-    "language-server-protocol",
-    "compile-commands",
-]
+keywords = ["ros", "catkin", "lsp", "compilecommands"]
 categories = ["command-line-utilities", "filesystem", "development-tools"]
 
 [dependencies]
