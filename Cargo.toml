@@ -3,8 +3,18 @@ name = "symlinkccc"
 version = "0.1.2"
 edition = "2021"
 authors = ["Martin Eek Gerhardsen <Martin.Eek.Gerhardsen@sintef.no>"]
-
-# See more keys and their definitions at https://1doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+description = "A small tool for linking compile commands from catkin builds"
+homepage = "https://github.com/MartinEekGerhardsen/symlinkccc"
+repository = "https://github.com/MartinEekGerhardsen/symlinkccc"
+readme = "README.md"
+keywords = [
+    "robot-operating-system",
+    "catkin",
+    "language-server-protocol",
+    "compile-commands",
+]
+categories = ["command-line-utilities", "filesystem", "development-tools"]
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
