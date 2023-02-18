@@ -24,9 +24,9 @@ pub fn get_all_build_package_paths(
     let names = WalkDir::new(build_path.clone())
         .max_depth(1)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.path().exists() && e.path().is_dir())
-        .filter_map(|e| e.file_name().to_str().map(|s| s.to_string()))
+        .filter_map(|e| e.file_name().to_str().map(std::string::ToString::to_string))
         .filter(|s| {
             !crate::config::CONFIG
                 .build

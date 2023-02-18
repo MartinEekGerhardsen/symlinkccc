@@ -14,19 +14,19 @@ pub enum Error {
 
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
-        Error::IO(value)
+        Self::IO(value)
     }
 }
 
 impl From<std::string::FromUtf8Error> for Error {
     fn from(value: std::string::FromUtf8Error) -> Self {
-        Error::FromUtf8(value)
+        Self::FromUtf8(value)
     }
 }
 
 impl From<which::Error> for Error {
     fn from(value: which::Error) -> Self {
-        Error::Which(value)
+        Self::Which(value)
     }
 }
 
@@ -36,9 +36,9 @@ fn split_package_to_path(package_to_path: &str) -> Option<(Package, SourcePackag
     if package_to_path.trim().is_empty() {
         None
     } else {
-        let package_and_path: Vec<&str> = package_to_path.splitn(2, " ").collect();
+        let package_and_path: Vec<&str> = package_to_path.splitn(2, ' ').collect();
 
-        match (package_and_path.get(0), package_and_path.get(1)) {
+        match (package_and_path.first(), package_and_path.get(1)) {
             (Some(package), Some(path)) => Some((
                 Package(package.trim().to_string()),
                 SourcePackage(Path::new(path.trim()).to_path_buf()),

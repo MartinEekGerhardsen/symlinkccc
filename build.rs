@@ -15,7 +15,7 @@ impl std::fmt::Display for Error {
 
 impl From<config_struct::Error> for Error {
     fn from(value: config_struct::Error) -> Self {
-        Error::ConfigStruct(value)
+        Self::ConfigStruct(value)
     }
 }
 

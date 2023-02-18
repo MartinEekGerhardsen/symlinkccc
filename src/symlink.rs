@@ -27,31 +27,31 @@ pub enum Error {
 
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
-        Error::IO(value)
+        Self::IO(value)
     }
 }
 
 impl From<crate::workspace::Error> for Error {
     fn from(value: crate::workspace::Error) -> Self {
-        Error::Workspace(value)
+        Self::Workspace(value)
     }
 }
 
 impl From<crate::source_package::Error> for Error {
     fn from(value: crate::source_package::Error) -> Self {
-        Error::SourcePackages(value)
+        Self::SourcePackages(value)
     }
 }
 
 impl From<crate::build_package::Error> for Error {
     fn from(value: crate::build_package::Error) -> Self {
-        Error::BuildPackages(value)
+        Self::BuildPackages(value)
     }
 }
 
 impl From<NoCompileCommandsError> for Error {
     fn from(value: NoCompileCommandsError) -> Self {
-        Error::NoCompileCommands(value)
+        Self::NoCompileCommands(value)
     }
 }
 

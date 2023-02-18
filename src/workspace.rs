@@ -22,13 +22,13 @@ pub enum Error {
 
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
-        Error::IO(value)
+        Self::IO(value)
     }
 }
 
 impl From<WorkspaceError> for Error {
     fn from(value: WorkspaceError) -> Self {
-        Error::Workspace(value)
+        Self::Workspace(value)
     }
 }
 
@@ -50,19 +50,14 @@ pub fn find_enclosing_workspace<P: AsRef<Path>>(search_start_path: P) -> Result<
             let search_next_path = search_next_path.canonicalize()?;
             log::info!("Found workspace path: {}", search_next_path.display());
             return Ok(Workspace(search_next_path));
+        } else if let Some(parent_path) = search_next_path.parent() {
+            search_next_path = parent_path.to_path_buf();
         } else {
-            match search_next_path.parent() {
-                Some(parent_path) => {
-                    search_next_path = parent_path.to_path_buf();
-                }
-                None => {
-                    log::error!(
-                        "Cannot find ROS workspace looking up from {}",
-                        search_start_path.as_ref().display()
-                    );
-                    return Err(Error::Workspace(WorkspaceError {}));
-                }
-            }
+            log::error!(
+                "Cannot find ROS workspace looking up from {}",
+                search_start_path.as_ref().display()
+            );
+            return Err(Error::Workspace(WorkspaceError {}));
         }
     }
 }
