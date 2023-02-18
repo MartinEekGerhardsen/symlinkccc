@@ -15,7 +15,7 @@ to your `.bashrc` file (or equivalent).
 Install this package using: 
 
 ```bash
-cargo install --git https://github.com/MartinEekGerhardsen/symlinkccc.git
+cargo install symlinkccc
 ```
 
 Then, in a `catkin` workspace: 
