@@ -12,7 +12,39 @@ test -f "${HOME}/.cargo/env" && source "${HOME}/.cargo/env"
 
 to your `.bashrc` file (or equivalent). 
 
+Install this package using: 
 
+```bash
+cargo install --git https://github.com/MartinEekGerhardsen/symlinkccc.git
+```
+
+Then, in a `catkin` workspace: 
+
+```bash
+catkin config --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+catkin build 
+symlinkccc
+```
+
+This command is pretty quick, especially compared to the average `catkin` build time, so I made a wrapper for `catkin`, which executes the `symlinkccc` program after each `catkin build`, while passing through any arguments. Add this to your `.bashrc` file (or equivalent). 
+
+```bash
+_catkin_wrapper () {
+    if (( $# == 0 ))
+    then
+        \catkin 
+    else
+        if [[ $1 == "build" ]]
+        then 
+            \catkin build ${@:2} && symlinkccc
+        else 
+            \catkin $@
+        fi
+    fi
+}
+
+alias catkin="_catkin_wrapper"
+```
 
 ## Why? 
 
@@ -30,4 +62,6 @@ The problem is that catkin places the `compile_commands.json`-files in the build
 
  - [ ] Test if `cargo watch` can be used to check if something has to be re-linked
  - [ ] Try to get the `rospack` command implemented purely in rust
+ - [ ] See if links can be juggled for profiles rather than just removing the old link for every time the program is executed
+ - [ ] Look to minimize the size of the binary by eliminating unneccessary dependencies. 
  - [ ] Can ROS compile on pure Windows? If so the symlink won't work.
