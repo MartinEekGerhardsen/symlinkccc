@@ -27,5 +27,4 @@ walkdir = "2.3"
 which = { version = "4.4" }
 
 [build-dependencies]
-config_struct = { version = "0.5", features = ["toml-parsing"] }
 const-gen = { version = "1.3" }
