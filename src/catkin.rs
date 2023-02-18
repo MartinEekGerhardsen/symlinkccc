@@ -11,8 +11,16 @@ pub enum CommandAndUTF8Error {
     UTF8(FromUtf8Error),
 }
 
+const CATKIN_PATH: &str = "/usr/bin/catkin";
+const ROSPACK_PATH: &str = "/opt/ros/melodic/bin/rospack";
+
+/* get_packages
+ *
+ * List all packages by name in path
+ *
+ */
 pub fn get_packages<P: AsRef<Path>>(path: P) -> Result<Vec<String>, CommandAndUTF8Error> {
-    let catkin_list_unformatted = Command::new("catkin")
+    let catkin_list_unformatted = Command::new(CATKIN_PATH)
         .args(["list", "--unformatted"])
         .current_dir(path)
         .output(); 
@@ -31,8 +39,16 @@ pub fn get_packages<P: AsRef<Path>>(path: P) -> Result<Vec<String>, CommandAndUT
     }
 }
 
+/*
+ * get_package_path
+ *
+ * Find path of specified package given 
+ * a path. Assumes the package name is 
+ * valid, as the returning String is not 
+ * checked as a path. 
+ */
 pub fn get_package_path<P: AsRef<Path>>(path: P, package: &str) -> Result<String, CommandAndUTF8Error> {
-    let rospack_find_package = Command::new("rospack")
+    let rospack_find_package = Command::new(ROSPACK_PATH)
         .args(["find", package])
         .current_dir(path)
         .output();
@@ -49,6 +65,14 @@ pub fn get_package_path<P: AsRef<Path>>(path: P, package: &str) -> Result<String
     }
 }
 
+/*
+ * split_package_to_path
+ *
+ * Helper-function to split a &str of the shape 
+ * "package package_path" into their respective variables. 
+ * Returns an option to simplify get_all_package_paths, 
+ * as both invalid package names and invalid paths are ignored.
+ */
 fn split_package_to_path(package_to_path: &str) -> Option<(String, PathBuf)> {
     if package_to_path.trim().is_empty() {
         None
@@ -69,8 +93,17 @@ fn split_package_to_path(package_to_path: &str) -> Option<(String, PathBuf)> {
     }
 }
 
+/* 
+ * get_all_package_paths
+ *
+ * Returns a HashMap of all available 
+ * package names and their corresponding 
+ * paths. This includes installed packages, 
+ * not only those in the src directory of a
+ * catkin 
+ */
 pub fn get_all_package_paths<P: AsRef<Path>>(path: P) -> Result<HashMap<String, PathBuf>, CommandAndUTF8Error> {
-    let rospack_list = Command::new("rospack")
+    let rospack_list = Command::new(ROSPACK_PATH)
         .args(["list"])
         .current_dir(path)
         .output();
@@ -92,8 +125,21 @@ pub fn get_all_package_paths<P: AsRef<Path>>(path: P) -> Result<HashMap<String, 
     }
 }
 
+/*
+ * get_dir
+ *
+ * Parses result of `catkin locate`. 
+ * This gives information on the current 
+ * directory based on which flag is given. 
+ *
+ * "-b" returns the build directory for the 
+ * current workspace
+ *
+ * "-s" returns the source directory for the 
+ * current workspace 
+ */
 fn get_dir<P: AsRef<Path>>(path: P, flag: &str) -> Result<String, CommandAndUTF8Error> {
-    let catkin_locate_flag = Command::new("catkin")
+    let catkin_locate_flag = Command::new(CATKIN_PATH)
         .args(["locate", flag])
         .current_dir(path)
         .output();
@@ -103,7 +149,9 @@ fn get_dir<P: AsRef<Path>>(path: P, flag: &str) -> Result<String, CommandAndUTF8
             let catkin_locate_flag = String::from_utf8(catkin_locate_flag.stdout); 
 
             match catkin_locate_flag {
-                Ok(catkin_locate_flag) => Ok(catkin_locate_flag),
+                Ok(catkin_locate_flag) => Ok(
+                    catkin_locate_flag.chars().filter(|c| !c.is_whitespace()).collect()
+                ),
                 Err(err) => Err(CommandAndUTF8Error::UTF8(err)),
             }
         }, 
@@ -117,6 +165,10 @@ pub fn get_build_dir<P: AsRef<std::path::Path>>(path: P) -> Result<String, Comma
 
 pub fn get_src_dir<P: AsRef<std::path::Path>>(path: P) -> Result<String, CommandAndUTF8Error> {
     get_dir(path, "-s")
+}
+
+pub fn get_workspace_dir<P: AsRef<std::path::Path>>(path: P) -> Result<String, CommandAndUTF8Error> {
+    get_dir(path, "")
 }
 
 pub fn is_package<S: AsRef<OsStr> + ?Sized>(path: &S) -> bool {
