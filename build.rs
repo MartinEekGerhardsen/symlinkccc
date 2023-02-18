@@ -1,10 +1,16 @@
-use std::{clone, path::Path};
-
 use config_struct::StructOptions;
 
 #[derive(Debug)]
 enum Error {
     ConfigStruct(config_struct::Error),
+}
+
+impl std::error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Build script error")
+    }
 }
 
 impl From<config_struct::Error> for Error {
