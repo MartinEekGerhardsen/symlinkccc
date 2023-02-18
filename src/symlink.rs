@@ -21,7 +21,6 @@ pub enum Error {
     IO(std::io::Error),
     Workspace(crate::workspace::Error),
     SourcePackages(crate::source_package::Error),
-    BuildPackages(crate::build_package::Error),
     NoCompileCommands(NoCompileCommandsError),
 }
 
@@ -40,12 +39,6 @@ impl From<crate::workspace::Error> for Error {
 impl From<crate::source_package::Error> for Error {
     fn from(value: crate::source_package::Error) -> Self {
         Self::SourcePackages(value)
-    }
-}
-
-impl From<crate::build_package::Error> for Error {
-    fn from(value: crate::build_package::Error) -> Self {
-        Self::BuildPackages(value)
     }
 }
 
@@ -129,21 +122,18 @@ pub fn link_all_compile_commands() -> Result<()> {
     let source_packages = get_all_source_package_paths(&workspace)?;
     log::debug!("All package names to package sources\n: {source_packages:?}");
 
-    let build_packages = get_all_build_package_paths(&workspace)?;
+    let build_packages = get_all_build_package_paths(&workspace);
     log::debug!("All package names to built packages\n: {build_packages:?}");
 
     for (package, build_package) in build_packages {
-        match source_packages.get(&package) {
-            Some(source_package) => {
-                log::debug!("Linking {package}");
-                log::debug!("From {build_package:?}");
-                log::debug!("To {source_package:?}");
-                link_compile_commands(&build_package, source_package)?;
-            }
-            None => {
-                log::warn!("Built package '{package}' cannot be found among the source packages.");
-                log::info!("This might be because this 'package' is only an umbrella for other packages, and therefore doens't show up in `rospack list`.");
-            }
+        if let Some(source_package) = source_packages.get(&package) {
+            log::debug!("Linking {package}");
+            log::debug!("From {build_package:?}");
+            log::debug!("To {source_package:?}");
+            link_compile_commands(&build_package, source_package)?;
+        } else {
+            log::warn!("Built package '{package}' cannot be found among the source packages.");
+            log::info!("This might be because this 'package' is only an umbrella for other packages, and therefore doens't show up in `rospack list`.");
         }
     }
 
