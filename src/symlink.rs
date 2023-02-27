@@ -2,7 +2,7 @@ use crate::{
     build_package::get_all_build_package_paths,
     ros_paths::{BuildPackage, SourcePackage},
     source_package::get_all_source_package_paths,
-    workspace::find_enclosing_workspace,
+    workspace::find_enclosing,
 };
 
 #[derive(Debug, Clone)]
@@ -108,7 +108,7 @@ pub fn link_all_compile_commands() -> Result<()> {
         current_working_directory.display()
     );
 
-    let workspace = find_enclosing_workspace(current_working_directory)?;
+    let workspace = find_enclosing(current_working_directory)?;
     log::debug!("Current workspace: {workspace:?}");
 
     let source_packages = get_all_source_package_paths(&workspace)?;

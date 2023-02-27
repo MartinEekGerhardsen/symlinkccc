@@ -4,11 +4,11 @@ use std::path::Path;
 use crate::ros_paths::Workspace;
 
 #[derive(Clone, Debug)]
-pub struct WorkspaceError;
+pub struct InvalidWorkspaceError;
 
-impl std::error::Error for WorkspaceError {}
+impl std::error::Error for InvalidWorkspaceError {}
 
-impl Display for WorkspaceError {
+impl Display for InvalidWorkspaceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Invalid workspace. Cannot find valid ROS workspace.")
     }
@@ -17,7 +17,7 @@ impl Display for WorkspaceError {
 #[derive(Debug)]
 pub enum Error {
     IO(std::io::Error),
-    Workspace(WorkspaceError),
+    Workspace(InvalidWorkspaceError),
 }
 
 impl From<std::io::Error> for Error {
@@ -26,15 +26,15 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl From<WorkspaceError> for Error {
-    fn from(value: WorkspaceError) -> Self {
+impl From<InvalidWorkspaceError> for Error {
+    fn from(value: InvalidWorkspaceError) -> Self {
         Self::Workspace(value)
     }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub fn find_enclosing_workspace<P: AsRef<Path>>(search_start_path: P) -> Result<Workspace> {
+pub fn find_enclosing<P: AsRef<Path>>(search_start_path: P) -> Result<Workspace> {
     let mut search_next_path = search_start_path.as_ref().to_path_buf();
     log::debug!(
         "Start looking for workspace from: {}",
@@ -56,7 +56,7 @@ pub fn find_enclosing_workspace<P: AsRef<Path>>(search_start_path: P) -> Result<
                 "Cannot find ROS workspace looking up from {}",
                 search_start_path.as_ref().display()
             );
-            return Err(Error::Workspace(WorkspaceError {}));
+            return Err(Error::Workspace(InvalidWorkspaceError {}));
         }
     }
 }
