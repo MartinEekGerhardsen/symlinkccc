@@ -2,6 +2,7 @@ mod build;
 mod build_package;
 mod config;
 mod package;
+mod paths;
 mod ros_paths;
 mod source_package;
 mod symlink;
