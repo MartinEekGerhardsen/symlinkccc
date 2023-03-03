@@ -17,16 +17,17 @@ pub fn get_all_build_package_paths(workspace: &Workspace) -> HashMap<Package, Bu
 
     log::debug!("Got build path: {}", build_path.display());
 
-    if let Ok(paths) = std::fs::read_dir(&build_path) {
-        paths
-            .filter_map(std::result::Result::ok)
-            .map(|e| e.path())
-            .filter(|p| p.exists() && p.is_dir())
-            .filter_map(path_to_string)
-            .filter(|s| !crate::config::BUILD_IGNORE_DIRS.contains(&s.as_str()))
-            .map(|s| (Package(s.clone()), BuildPackage(build_path.join(s))))
-            .collect()
-    } else {
-        HashMap::new()
-    }
+    std::fs::read_dir(&build_path).map_or_else(
+        |_| HashMap::new(),
+        |paths| {
+            paths
+                .filter_map(std::result::Result::ok)
+                .map(|e| e.path())
+                .filter(|p| p.exists() && p.is_dir())
+                .filter_map(path_to_string)
+                .filter(|s| !crate::config::BUILD_IGNORE_DIRS.contains(&s.as_str()))
+                .map(|s| (Package(s.clone()), BuildPackage(build_path.join(s))))
+                .collect()
+        },
+    )
 }
