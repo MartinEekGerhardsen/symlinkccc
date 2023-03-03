@@ -1,8 +1,7 @@
-mod build;
 mod build_package;
 mod config;
 mod package;
-mod ros_paths;
+mod paths;
 mod source_package;
 mod symlink;
 mod workspace;
