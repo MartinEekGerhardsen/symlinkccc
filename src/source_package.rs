@@ -84,7 +84,7 @@ fn get_package_name(source: &SourcePackage) -> Option<Package> {
     }
 }
 
-fn get_package_name_from_entry(entry: walkdir::DirEntry) -> Option<(Package, SourcePackage)> {
+fn get_package_name_from_entry(entry: &walkdir::DirEntry) -> Option<(Package, SourcePackage)> {
     let path = entry.path();
     if !path.exists() || !path.is_dir() {
         log::info!("Path is not a valid package {}", path.display());
@@ -101,8 +101,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|s| s.starts_with('.'))
-        .unwrap_or(false)
+        .map_or(false, |s| s.starts_with('.'))
 }
 
 pub fn get_all_source_package_paths(workspace: &Workspace) -> HashMap<Package, SourcePackage> {
@@ -115,7 +114,7 @@ pub fn get_all_source_package_paths(workspace: &Workspace) -> HashMap<Package, S
     walker
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
-        .filter_map(|e| e.ok())
-        .filter_map(get_package_name_from_entry)
+        .filter_map(std::result::Result::ok)
+        .filter_map(|e| get_package_name_from_entry(&e))
         .collect()
 }

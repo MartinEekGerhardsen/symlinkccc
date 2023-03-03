@@ -5,12 +5,10 @@ use crate::{
     paths::structs::{Build, BuildPackage, Workspace},
 };
 
-fn valid_path_buf_to_str(path: std::path::PathBuf) -> Option<String> {
-    if let Some(file_name) = path.file_name() {
-        file_name.to_str().map(|file_name| file_name.to_string())
-    } else {
-        None
-    }
+fn valid_path_buf_to_str(path: &std::path::PathBuf) -> Option<String> {
+    path.file_name().map_or(None, |file_name| {
+        file_name.to_str().map(std::string::ToString::to_string)
+    })
 }
 
 pub fn get_all_build_package_paths(workspace: &Workspace) -> HashMap<Package, BuildPackage> {
@@ -21,10 +19,10 @@ pub fn get_all_build_package_paths(workspace: &Workspace) -> HashMap<Package, Bu
 
     if let Ok(paths) = std::fs::read_dir(&build_path) {
         paths
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .map(|e| e.path())
             .filter(|p| p.exists() && p.is_dir())
-            .filter_map(valid_path_buf_to_str)
+            .filter_map(|p| valid_path_buf_to_str(&p))
             .filter(|s| !crate::config::BUILD_IGNORE_DIRS.contains(&s.as_str()))
             .map(|s| (Package(s.clone()), BuildPackage(build_path.join(s))))
             .collect()

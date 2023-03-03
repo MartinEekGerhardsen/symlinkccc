@@ -1,7 +1,7 @@
 use crate::paths::path::Path;
 
 #[macro_export]
-macro_rules! generate_path_structs {
+macro_rules! generate_paths {
     ( $( $x:ident ), * ) => {
         $(
             #[derive(Debug)]
@@ -30,7 +30,7 @@ macro_rules! generate_path_structs {
     };
 }
 
-generate_path_structs![
+generate_paths![
     Workspace,
     Build,
     BuildPackage,
@@ -54,24 +54,24 @@ impl super::origin_file::OriginFile for SourcePackageCMakeLists {}
 
 impl From<&Workspace> for Build {
     fn from(Workspace(path): &Workspace) -> Self {
-        Build(path.join("build"))
+        Self(path.join("build"))
     }
 }
 
 impl From<&Workspace> for Source {
     fn from(Workspace(path): &Workspace) -> Self {
-        Source(path.join("src"))
+        Self(path.join("src"))
     }
 }
 
 impl From<&SourcePackage> for SourcePackageXML {
     fn from(SourcePackage(path): &SourcePackage) -> Self {
-        SourcePackageXML(path.join("package.xml"))
+        Self(path.join("package.xml"))
     }
 }
 
 impl From<&SourcePackage> for SourcePackageCMakeLists {
     fn from(SourcePackage(path): &SourcePackage) -> Self {
-        SourcePackageCMakeLists(path.join("CMakeLists.txt"))
+        Self(path.join("CMakeLists.txt"))
     }
 }
