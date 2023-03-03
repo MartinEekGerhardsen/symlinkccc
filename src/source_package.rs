@@ -24,19 +24,25 @@ fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<Packag
 }
 
 fn get_file_package_name(path: &std::path::PathBuf, pattern: &regex::Regex) -> Option<Package> {
-    if let Ok(data) = std::fs::read(path) {
-        log::debug!("Successfully read {}", path.display());
-        if let Ok(document) = std::str::from_utf8(&data) {
-            log::debug!("Successfully converted data from utf8 to str");
-            extract_package_name(document, pattern)
-        } else {
-            log::warn!("Couldn't convert from utf8 to string, ignoring this path");
+    std::fs::read(path).map_or_else(
+        |_| {
+            log::warn!("Couldn't read document path, ignoring this path");
             None
-        }
-    } else {
-        log::warn!("Couldn't read document path, ignoring this path");
-        None
-    }
+        },
+        |data| {
+            log::debug!("Successfully read {}", path.display());
+            std::str::from_utf8(&data).map_or_else(
+                |_| {
+                    log::warn!("Couldn't convert from utf8 to string, ignoring this path");
+                    None
+                },
+                |doc| {
+                    log::debug!("Successfully converted data from utf8 to str");
+                    extract_package_name(doc, pattern)
+                },
+            )
+        },
+    )
 }
 
 fn get_package_name(source: &SourcePackage) -> Option<Package> {
