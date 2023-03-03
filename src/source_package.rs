@@ -1,75 +1,121 @@
-use std::{collections::HashMap, path::Path, process::Command};
+use std::collections::HashMap;
+
+use walkdir::{DirEntry, WalkDir};
 
 use crate::{
     package::Package,
-    ros_paths::{SourcePackage, Workspace},
+    paths::{
+        origin_file::OriginFile,
+        structs::{Source, SourcePackage, SourcePackageCMakeLists, SourcePackageXML, Workspace},
+    },
 };
 
-#[derive(Debug)]
-pub enum Error {
-    IO(std::io::Error),
-    FromUtf8(std::string::FromUtf8Error),
-    Which(which::Error),
+fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<Package> {
+    log::debug!("Extracting package name from document: \n{document}");
+    let package_name_captures = pattern.captures(document)?;
+
+    log::debug!("Captures from document: {package_name_captures:?}");
+
+    let package_name_match = package_name_captures.get(1)?;
+
+    let package_name = Package(package_name_match.as_str().to_string());
+
+    Some(package_name)
 }
 
-impl From<std::io::Error> for Error {
-    fn from(value: std::io::Error) -> Self {
-        Self::IO(value)
-    }
-}
-
-impl From<std::string::FromUtf8Error> for Error {
-    fn from(value: std::string::FromUtf8Error) -> Self {
-        Self::FromUtf8(value)
-    }
-}
-
-impl From<which::Error> for Error {
-    fn from(value: which::Error) -> Self {
-        Self::Which(value)
-    }
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
-
-fn split_package_to_path(package_to_path: &str) -> Option<(Package, SourcePackage)> {
-    if package_to_path.trim().is_empty() {
-        None
-    } else {
-        let package_and_path: Vec<&str> = package_to_path.splitn(2, ' ').collect();
-
-        match (package_and_path.first(), package_and_path.get(1)) {
-            (Some(package), Some(path)) => Some((
-                Package(package.trim().to_string()),
-                SourcePackage(Path::new(path.trim()).to_path_buf()),
-            )),
-            (_, _) => None,
+fn get_file_package_name(path: &std::path::PathBuf, pattern: &regex::Regex) -> Option<Package> {
+    if let Ok(data) = std::fs::read(path) {
+        log::debug!("Successfully read {}", path.display());
+        if let Ok(document) = std::str::from_utf8(&data) {
+            log::debug!("Successfully converted data from utf8 to str");
+            extract_package_name(document, pattern)
+        } else {
+            log::warn!("Couldn't convert from utf8 to string, ignoring this path");
+            None
         }
+    } else {
+        log::warn!("Couldn't read document path, ignoring this path");
+        None
     }
 }
 
-pub fn get_all_source_package_paths(
-    Workspace(workspace_path): &Workspace,
-) -> Result<HashMap<Package, SourcePackage>> {
-    log::info!("Getting all packages and related source paths");
+fn get_package_name(source: &SourcePackage) -> Option<Package> {
+    log::info!("Getting package name for potential package: {source:?}");
 
-    let rospack = which::which(crate::config::ROSPACK_COMMAND)?;
-    log::debug!("Found rospack command: {}", rospack.display());
+    let xml = SourcePackageXML::from(source);
+    let xml = xml.canonicalize().ok()?;
 
-    let rospack_list = Command::new(rospack)
-        .args(["list"])
-        .current_dir(workspace_path)
-        .output()?;
-    log::debug!("Result from `rospack list` command:\n{rospack_list:?}");
+    let cmakelists = SourcePackageCMakeLists::from(source);
+    let cmakelists = cmakelists.canonicalize().ok()?;
 
-    let rospack_list = String::from_utf8(rospack_list.stdout)?;
-    log::debug!("Standard output:\n{rospack_list}");
+    if !xml.exists() {
+        log::info!("Assuming {source} is not a package as it has no package.xml file");
+        log::debug!("Can't find package.xml file: {xml}");
 
-    let name_to_package = rospack_list
-        .split('\n')
-        .filter_map(split_package_to_path)
-        .collect();
-    log::debug!("`rospack list` result split:\n{name_to_package:?}");
+        return None;
+    }
 
-    Ok(name_to_package)
+    if !cmakelists.exists() {
+        log::info!("Assuming {source} is not a package as it has no CMakeLists.txt file");
+        log::debug!("Can't find CMakeLists.txt file: {cmakelists}");
+        return None;
+    }
+
+    lazy_static::lazy_static! {
+        static ref XML_REGEX: regex::Regex = regex::Regex::new(r"\s*<\s*name\s*>\s*(\w*)\s*<\s*/\s*name\s*>\s*").unwrap();
+    }
+    let SourcePackageXML(xml_path) = xml;
+    let xml = get_file_package_name(&xml_path, &XML_REGEX)?;
+    log::debug!("Package name from package.xml: {xml}");
+
+    lazy_static::lazy_static! {
+        static ref CMAKELISTS_REGEX: regex::Regex = regex::Regex::new(r"\s*project\s*\(\s*(\w*)\s*\)\s*").unwrap();
+    }
+    let SourcePackageCMakeLists(cmakelists_path) = cmakelists;
+    let cmakelists = get_file_package_name(&cmakelists_path, &CMAKELISTS_REGEX)?;
+    log::debug!("Package name from CMakeLists.txt: {cmakelists}");
+
+    if xml == cmakelists {
+        log::info!("Found package name: {xml}");
+        Some(xml)
+    } else {
+        log::warn!("Package name from package.xml and CMakeLists.txt are different!");
+        None
+    }
+}
+
+fn get_package_name_from_entry(entry: walkdir::DirEntry) -> Option<(Package, SourcePackage)> {
+    let path = entry.path();
+    if !path.exists() || !path.is_dir() {
+        log::info!("Path is not a valid package {}", path.display());
+        return None;
+    }
+
+    let package = SourcePackage(path.to_path_buf());
+    let package_name = get_package_name(&package)?;
+
+    Some((package_name, package))
+}
+
+fn is_hidden(entry: &DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with('.'))
+        .unwrap_or(false)
+}
+
+pub fn get_all_source_package_paths(workspace: &Workspace) -> HashMap<Package, SourcePackage> {
+    log::info!("Getting all source packages in the source folder");
+    let Source(source_path) = Source::from(workspace);
+
+    log::debug!("Got source path: {}", source_path.display());
+
+    let walker = WalkDir::new(source_path).follow_links(true);
+    walker
+        .into_iter()
+        .filter_entry(|e| !is_hidden(e))
+        .filter_map(|e| e.ok())
+        .filter_map(get_package_name_from_entry)
+        .collect()
 }

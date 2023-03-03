@@ -7,7 +7,6 @@ fn main() {
 
         let const_declarations = vec![
             const_declaration!(pub METADATA_DIR_NAME = ".catkin_tools"),
-            const_declaration!(pub ROSPACK_COMMAND = "rospack"),
             const_declaration!(pub BUILD_IGNORE_DIRS = ["build", "catkin_tools_prebuild"]),
             const_declaration!(pub COMPILE_COMMANDS_NAME = "compile_commands.json"),
         ]

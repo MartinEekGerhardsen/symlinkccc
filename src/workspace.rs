@@ -1,7 +1,7 @@
 use core::fmt::{self, Display};
 use std::path::Path;
 
-use crate::ros_paths::Workspace;
+use crate::paths::structs::Workspace;
 
 #[derive(Clone, Debug)]
 pub struct InvalidWorkspaceError;

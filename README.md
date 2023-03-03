@@ -61,6 +61,10 @@ The problem is that catkin places the `compile_commands.json`-files in the build
 ## TODOs
 
  - [ ] Fix warning due to workspace being the name of a mod and multiple other things
+ - [ ] Use async
+ - [ ] Async handling of source and build directories
+ - [ ] Async loading files (package.xml/CMakeLists.txt)
+ - [ ] Async linking of different files
  - [ ] Test if `cargo watch` can be used to check if something has to be re-linked
  - [ ] Try to get the `rospack` command implemented purely in rust
  - [ ] See if links can be juggled for profiles rather than just removing the old link for every time the program is executed
