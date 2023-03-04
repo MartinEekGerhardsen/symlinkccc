@@ -14,10 +14,11 @@ categories = ["command-line-utilities", "filesystem", "development-tools"]
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
 clap-verbosity-flag = "2.0"
+env_logger = "0.10"
 lazy_static = "1.4.0"
 log = "0.4"
-env_logger = "0.10"
 regex = "1"
+tokio = { version = "1", features = ["full"] }
 walkdir = "2.3"
 
 [build-dependencies]
