@@ -3,14 +3,17 @@ use std::collections::HashMap;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::{
-    package::Package,
+    package_name::PackageName,
+    parsers::{cmakelists::cmakelists_name_parser, package::package_name_parser},
     paths::{
         origin_file::OriginFile,
         structs::{Source, SourcePackage, SourcePackageCMakeLists, SourcePackageXML, Workspace},
     },
 };
 
-fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<Package> {
+use super::package_container::PackageContainer;
+
+fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<PackageName> {
     log::debug!("Extracting package name from document: \n{document}");
     let package_name_captures = pattern.captures(document)?;
 
@@ -18,12 +21,15 @@ fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<Packag
 
     let package_name_match = package_name_captures.get(1)?;
 
-    let package_name = Package(package_name_match.as_str().to_string());
+    let package_name = PackageName(package_name_match.as_str().to_string());
 
     Some(package_name)
 }
 
-fn get_file_package_name(path: &std::path::PathBuf, pattern: &regex::Regex) -> Option<Package> {
+fn get_file_package_name(
+    path: &std::path::PathBuf,
+    parser: fn(&str) -> Option<String>,
+) -> Option<PackageName> {
     std::fs::read(path).map_or_else(
         |_| {
             log::warn!("Couldn't read document path, ignoring this path");
@@ -38,14 +44,14 @@ fn get_file_package_name(path: &std::path::PathBuf, pattern: &regex::Regex) -> O
                 },
                 |doc| {
                     log::debug!("Successfully converted data from utf8 to str");
-                    extract_package_name(doc, pattern)
+                    parser(doc).and_then(|package_name| Some(PackageName(package_name)))
                 },
             )
         },
     )
 }
 
-fn get_package_name(source: &SourcePackage) -> Option<Package> {
+fn get_package_name(source: &SourcePackage) -> Option<PackageName> {
     log::info!("Getting package name for potential package: {source:?}");
 
     let xml = SourcePackageXML::from(source);
@@ -71,14 +77,14 @@ fn get_package_name(source: &SourcePackage) -> Option<Package> {
         static ref XML_REGEX: regex::Regex = regex::Regex::new(r"\s*<\s*name\s*>\s*(\w*)\s*<\s*/\s*name\s*>\s*").unwrap();
     }
     let SourcePackageXML(xml_path) = xml;
-    let xml = get_file_package_name(&xml_path, &XML_REGEX)?;
+    let xml = get_file_package_name(&xml_path, package_name_parser)?;
     log::debug!("Package name from package.xml: {xml}");
 
     lazy_static::lazy_static! {
         static ref CMAKELISTS_REGEX: regex::Regex = regex::Regex::new(r"\s*project\s*\(\s*(\w*)\s*\)\s*").unwrap();
     }
     let SourcePackageCMakeLists(cmakelists_path) = cmakelists;
-    let cmakelists = get_file_package_name(&cmakelists_path, &CMAKELISTS_REGEX)?;
+    let cmakelists = get_file_package_name(&cmakelists_path, cmakelists_name_parser)?;
     log::debug!("Package name from CMakeLists.txt: {cmakelists}");
 
     if xml == cmakelists {
@@ -90,7 +96,7 @@ fn get_package_name(source: &SourcePackage) -> Option<Package> {
     }
 }
 
-fn get_package_name_from_entry(entry: &walkdir::DirEntry) -> Option<(Package, SourcePackage)> {
+fn get_package_name_from_entry(entry: &walkdir::DirEntry) -> Option<(PackageName, SourcePackage)> {
     let path = entry.path();
     if !path.exists() || !path.is_dir() {
         log::info!("Path is not a valid package {}", path.display());
@@ -110,17 +116,20 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .map_or(false, |s| s.starts_with('.'))
 }
 
-pub fn get_all_source_package_paths(workspace: &Workspace) -> HashMap<Package, SourcePackage> {
-    log::info!("Getting all source packages in the source folder");
-    let Source(source_path) = Source::from(workspace);
+impl PackageContainer for Source {
+    type PackageType = SourcePackage;
 
-    log::debug!("Got source path: {}", source_path.display());
+    fn get_all_package_paths(&self) -> HashMap<PackageName, Self::PackageType> {
+        let Source(source_path) = self;
 
-    let walker = WalkDir::new(source_path).follow_links(true);
-    walker
-        .into_iter()
-        .filter_entry(|e| !is_hidden(e))
-        .filter_map(std::result::Result::ok)
-        .filter_map(|e| get_package_name_from_entry(&e))
-        .collect()
+        log::debug!("Got source path: {}", source_path.display());
+
+        WalkDir::new(source_path)
+            .follow_links(true)
+            .into_iter()
+            .filter_entry(|e| !is_hidden(e))
+            .filter_map(std::result::Result::ok)
+            .filter_map(|e| get_package_name_from_entry(&e))
+            .collect()
+    }
 }

@@ -1,4 +1,8 @@
-use crate::paths::path::Path;
+use std::collections::HashMap;
+
+use crate::{package_name::PackageName, paths::path::Path};
+
+use super::package_container::PackageContainer;
 
 #[macro_export]
 macro_rules! generate_paths {
