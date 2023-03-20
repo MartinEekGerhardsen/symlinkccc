@@ -1,10 +1,8 @@
 use crate::{
-    build_package::get_all_build_package_paths,
     paths::{
         package::Package,
-        structs::{BuildPackage, SourcePackage},
+        structs::{Build, BuildPackage, Source, SourcePackage},
     },
-    source_package::get_all_source_package_paths,
     workspace::find_enclosing,
 };
 
@@ -94,6 +92,7 @@ fn link_compile_commands(
 
     Ok(())
 }
+use crate::paths::package_container::PackageContainer;
 
 pub fn link_all_compile_commands() -> Result<()> {
     let current_working_directory = std::env::current_dir()?;
@@ -105,20 +104,22 @@ pub fn link_all_compile_commands() -> Result<()> {
     let workspace = find_enclosing(current_working_directory)?;
     log::debug!("Current workspace: {workspace}");
 
-    let source_packages = get_all_source_package_paths(&workspace);
+    let source = Source::from(&workspace);
+    let source_packages = source.get_all_package_paths();
     log::debug!("All package names to package sources\n: {source_packages:?}");
 
-    let build_packages = get_all_build_package_paths(&workspace);
+    let build = Build::from(&workspace);
+    let build_packages = build.get_all_package_paths();
     log::debug!("All package names to built packages\n: {build_packages:?}");
 
-    for (package, build_package) in build_packages {
-        if let Some(source_package) = source_packages.get(&package) {
-            log::debug!("Linking {package}");
+    for (package_name, build_package) in build_packages {
+        if let Some(source_package) = source_packages.get(&package_name) {
+            log::debug!("Linking {package_name}");
             log::debug!("From {build_package:?}");
             log::debug!("To {source_package:?}");
             link_compile_commands(&build_package, source_package)?;
         } else {
-            log::warn!("Built package '{package}' cannot be found among the source packages.");
+            log::warn!("Built package '{package_name}' cannot be found among the source packages.");
             log::info!("This might be because this 'package' is only an umbrella for other packages, and therefore doens't show up in `rospack list`.");
         }
     }

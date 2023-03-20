@@ -1,8 +1,7 @@
-mod build_package;
 mod config;
-mod package;
+mod package_name;
+mod parsers;
 mod paths;
-mod source_package;
 mod symlink;
 mod workspace;
 
