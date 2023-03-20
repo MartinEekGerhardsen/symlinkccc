@@ -13,19 +13,6 @@ use crate::{
 
 use super::package_container::PackageContainer;
 
-fn extract_package_name(document: &str, pattern: &regex::Regex) -> Option<PackageName> {
-    log::debug!("Extracting package name from document: \n{document}");
-    let package_name_captures = pattern.captures(document)?;
-
-    log::debug!("Captures from document: {package_name_captures:?}");
-
-    let package_name_match = package_name_captures.get(1)?;
-
-    let package_name = PackageName(package_name_match.as_str().to_string());
-
-    Some(package_name)
-}
-
 fn get_file_package_name(
     path: &std::path::PathBuf,
     parser: fn(&str) -> Option<String>,
@@ -72,17 +59,10 @@ fn get_package_name(source: &SourcePackage) -> Option<PackageName> {
         log::debug!("Can't find CMakeLists.txt file: {cmakelists}");
         return None;
     }
-
-    lazy_static::lazy_static! {
-        static ref XML_REGEX: regex::Regex = regex::Regex::new(r"\s*<\s*name\s*>\s*(\w*)\s*<\s*/\s*name\s*>\s*").unwrap();
-    }
     let SourcePackageXML(xml_path) = xml;
     let xml = get_file_package_name(&xml_path, package_name_parser)?;
     log::debug!("Package name from package.xml: {xml}");
 
-    lazy_static::lazy_static! {
-        static ref CMAKELISTS_REGEX: regex::Regex = regex::Regex::new(r"\s*project\s*\(\s*(\w*)\s*\)\s*").unwrap();
-    }
     let SourcePackageCMakeLists(cmakelists_path) = cmakelists;
     let cmakelists = get_file_package_name(&cmakelists_path, cmakelists_name_parser)?;
     log::debug!("Package name from CMakeLists.txt: {cmakelists}");

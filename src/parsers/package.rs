@@ -63,7 +63,6 @@ mod tests {
   <maintainer email=\"oss@ouster.io\">ouster developers</maintainer>
   <license file=\"LICENSE\">BSD</license>
   <buildtool_depend>catkin</buildtool_depend>
-
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
@@ -71,7 +70,6 @@ mod tests {
   <depend>tf2_ros</depend>
   <depend>pcl_ros</depend>
   <depend>pcl_conversions</depend>
-
   <build_depend>boost</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>libjsoncpp-dev</build_depend>
@@ -81,16 +79,13 @@ mod tests {
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>curl</build_depend>
   <build_depend>spdlog</build_depend>
-  
   <exec_depend>nodelet</exec_depend>
   <exec_depend>libjsoncpp</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>curl</exec_depend>
   <exec_depend>spdlog</exec_depend>
-
   <test_depend>gtest</test_depend>
-
   <export>
     <nodelet plugin=\"${prefix}/nodelets_os.xml\"/>
   </export>
@@ -140,5 +135,6 @@ mod tests {
             // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
             buf.clear();
         }
+        println!("{count}");
     }
 }
