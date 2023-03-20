@@ -1,13 +1,12 @@
 use nom::{
-    branch::{self, alt},
-    bytes::complete::{tag, tag_no_case, take_till, take_until},
+    branch::{alt},
+    bytes::complete::{tag, tag_no_case, take_until},
     character::complete::{
-        alpha0, alpha1, alphanumeric0, alphanumeric1, multispace0, newline, not_line_ending,
+        alpha1, alphanumeric1, multispace0, not_line_ending,
     },
-    combinator::{recognize, value},
-    error::ParseError,
-    multi::{many0, many0_count, many_till},
-    sequence::{delimited, pair, tuple},
+    combinator::{recognize},
+    multi::{many0, many0_count},
+    sequence::{delimited, pair},
     IResult,
 };
 

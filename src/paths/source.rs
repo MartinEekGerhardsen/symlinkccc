@@ -7,7 +7,7 @@ use crate::{
     parsers::{cmakelists::cmakelists_name_parser, package::package_name_parser},
     paths::{
         origin_file::OriginFile,
-        structs::{Source, SourcePackage, SourcePackageCMakeLists, SourcePackageXML, Workspace},
+        structs::{Source, SourcePackage, SourcePackageCMakeLists, SourcePackageXML},
     },
 };
 
@@ -44,7 +44,7 @@ fn get_file_package_name(
                 },
                 |doc| {
                     log::debug!("Successfully converted data from utf8 to str");
-                    parser(doc).and_then(|package_name| Some(PackageName(package_name)))
+                    parser(doc).map(PackageName)
                 },
             )
         },
@@ -120,7 +120,7 @@ impl PackageContainer for Source {
     type PackageType = SourcePackage;
 
     fn get_all_package_paths(&self) -> HashMap<PackageName, Self::PackageType> {
-        let Source(source_path) = self;
+        let Self(source_path) = self;
 
         log::debug!("Got source path: {}", source_path.display());
 

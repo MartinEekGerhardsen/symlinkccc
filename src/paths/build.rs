@@ -18,11 +18,11 @@ impl PackageContainer for Build {
 
     fn get_all_package_paths(&self) -> HashMap<PackageName, Self::PackageType> {
         log::info!("Getting all built packages in the build folder");
-        let Build(build_path) = self;
+        let Self(build_path) = self;
 
         log::debug!("Got build path: {}", build_path.display());
 
-        std::fs::read_dir(&build_path).map_or_else(
+        std::fs::read_dir(build_path).map_or_else(
             |_| HashMap::new(),
             |paths| {
                 paths
